@@ -4,12 +4,27 @@ import Allocation from '../models/allocationModel.js';
 
 export const getAdminDashboard = async (req, res) => {
   try {
-    const [courseCount, studentCount, facultyCount, pendingAllocations, approvedAllocations] = await Promise.all([
+    const [
+      courseCount,
+      studentCount,
+      facultyCount,
+      pendingAllocations,
+      approvedAllocations,
+      courses,
+      students,
+      pendingRequests,
+    ] = await Promise.all([
       Course.countDocuments(),
       User.countDocuments({ role: 'student' }),
       User.countDocuments({ role: 'faculty' }),
       Allocation.countDocuments({ status: 'pending' }),
       Allocation.countDocuments({ status: 'approved' }),
+      Course.find().sort({ createdAt: -1 }),
+      User.find({ role: 'student' }).select('name email role').sort({ createdAt: -1 }),
+      Allocation.find({ status: 'pending' })
+        .populate('student', 'name email role')
+        .populate('course', 'name code department faculty status')
+        .sort({ createdAt: -1 }),
     ]);
 
     return res.json({
@@ -21,6 +36,9 @@ export const getAdminDashboard = async (req, res) => {
         pendingAllocations,
         approvedAllocations,
       },
+      courses,
+      students,
+      pendingRequests,
     });
   } catch (error) {
     return res.status(500).json({ message: error.message || 'Failed to fetch admin dashboard data.' });
