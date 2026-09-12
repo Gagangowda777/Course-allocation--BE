@@ -13,6 +13,7 @@ export const getAdminDashboard = async (req, res) => {
       courses,
       students,
       pendingRequests,
+      faculty,
     ] = await Promise.all([
       Course.countDocuments(),
       User.countDocuments({ role: 'student' }),
@@ -25,6 +26,7 @@ export const getAdminDashboard = async (req, res) => {
         .populate('student', 'name email role')
         .populate('course', 'name code department faculty status')
         .sort({ createdAt: -1 }),
+      User.find({ role: 'faculty' }).select('name email role').sort({ createdAt: -1 }),
     ]);
 
     return res.json({
@@ -39,6 +41,7 @@ export const getAdminDashboard = async (req, res) => {
       courses,
       students,
       pendingRequests,
+      faculty,
     });
   } catch (error) {
     return res.status(500).json({ message: error.message || 'Failed to fetch admin dashboard data.' });
